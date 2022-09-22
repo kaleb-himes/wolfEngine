@@ -740,6 +740,7 @@ static int we_pkey_ecdsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *sig
     }
 
     if (ret == 1 && (rc = we_ecc_check_curve_usage(ecc->curveId)) != 1) {
+        (void) rc; /* silence unread compiler report */
         WOLFENGINE_ERROR_FUNC(WE_LOG_PK, "we_ecc_check_curve_usage", rc);
         ret = 0;
     }
@@ -1736,6 +1737,7 @@ static int we_ec_key_keygen(EC_KEY *key)
                              &curveId);
 
     if (ret == 1 && (rc = we_ecc_check_curve_usage(curveId)) != 1) {
+        (void) rc; /* silence unread compiler report */
         WOLFENGINE_ERROR_FUNC(WE_LOG_PK, "we_ecc_check_curve_usage", rc);
         ret = 0;
     }
@@ -1852,6 +1854,7 @@ static int we_ec_key_compute_key(unsigned char **psec, size_t *pseclen,
     group = EC_KEY_get0_group(ecdh);
     ret = we_ec_get_curve_id(EC_GROUP_get_curve_name(group), &curveId);
     if (ret == 1 && (rc = we_ecc_check_curve_usage(curveId)) != 1) {
+        (void) rc; /* silence unread compiler report */
         WOLFENGINE_ERROR_FUNC(WE_LOG_PK, "we_ecc_check_curve_usage", rc);
         ret = 0;
     }
@@ -2034,11 +2037,13 @@ static ECDSA_SIG* we_ecdsa_do_sign_ex(const unsigned char *d, int dlen,
 
     if ((rc = we_ec_get_curve_id(EC_GROUP_get_curve_name(
                                  EC_KEY_get0_group(key)), &curveId)) == 0) {
+        (void) rc; /* silence unread compiler report */
         WOLFENGINE_ERROR_FUNC(WE_LOG_PK, "we_ec_get_curve_id", rc);
         return NULL;
     }
 
     if ((rc = we_ecc_check_curve_usage(curveId)) == 0) {
+        (void) rc; /* silence unread compiler report */
         WOLFENGINE_ERROR_FUNC(WE_LOG_PK, "we_ecc_check_curve_usage", rc);
         return NULL;
     }
@@ -2258,6 +2263,7 @@ static int we_ecdsa_do_verify(const unsigned char *d, int dlen,
 
     if ((rc = we_ec_get_curve_id(
         EC_GROUP_get_curve_name(EC_KEY_get0_group(key)), &curveId)) != 1) {
+        (void) rc; /* silence unread compiler report */
         WOLFENGINE_ERROR_FUNC(WE_LOG_PK,"we_ec_get_curve_id", rc);
         ret = -1;
     }
@@ -2377,6 +2383,7 @@ static int we_ec_key_sign(int type, const unsigned char *dgst, int dLen,
     group = EC_KEY_get0_group(ecKey);
     ret = we_ec_get_curve_id(EC_GROUP_get_curve_name(group), &curveId);
     if (ret == 1 && (rc = we_ecc_check_curve_usage(curveId)) != 1) {
+        (void) rc; /* silence unread compiler report */
         WOLFENGINE_ERROR_FUNC(WE_LOG_PK, "we_ecc_check_curve_usage", rc);
         ret = 0;
     }

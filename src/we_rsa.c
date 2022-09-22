@@ -2587,7 +2587,7 @@ static int we_rsa_pkey_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
         ret = 0;
     }
 
-    if (rsa->md != NULL &&
+    if (rsa != NULL && rsa->md != NULL &&
         we_check_rsa_signing_md(EVP_MD_type(rsa->md)) != 1) {
         ret = 0;
     }
