@@ -25,6 +25,9 @@
 
 #if defined(WE_HAVE_ECDSA) || defined(WE_HAVE_ECDH)
 
+/* SHA-256 sized: FIPS v7 refuses to sign a digest shorter than SHA-224's. */
+#define WE_TEST_ECDSA_DIGEST_SZ 32
+
 #ifdef WE_HAVE_EC_P192
 static const unsigned char ecc_key_der_192[] = {
     0x30, 0x5F, 0x02, 0x01, 0x01, 0x04, 0x18, 0xA8, 0x57, 0x41,
@@ -897,6 +900,10 @@ int test_ecdsa_p192_pkey(ENGINE *e, void *data)
         PRINT_MSG("Verify with wolfengine");
         err = test_pkey_verify_ecc(pkey, e, buf, sizeof(buf), ecdsaSig,
                                    ecdsaSigLen);
+#ifdef WE_TEST_FIPS_V7
+        /* v7 refuses P-192 verify as well as sign. */
+        err = err != 1;
+#endif
     }
     if (err == 0) {
         PRINT_MSG("Verify bad signature with wolfengine");
@@ -944,7 +951,7 @@ int test_ecdsa_p224_pkey(ENGINE *e, void *data)
     EVP_PKEY *pkey = NULL;
     unsigned char ecdsaSig[64];
     size_t ecdsaSigLen;
-    unsigned char buf[20];
+    unsigned char buf[WE_TEST_ECDSA_DIGEST_SZ];
     const unsigned char *p = ecc_key_der_224;
 
     (void)data;
@@ -1002,7 +1009,7 @@ int test_ecdsa_p256_pkey(ENGINE *e, void *data)
     EVP_PKEY *pkey = NULL;
     unsigned char ecdsaSig[80];
     size_t ecdsaSigLen;
-    unsigned char buf[20];
+    unsigned char buf[WE_TEST_ECDSA_DIGEST_SZ];
     const unsigned char *p = ecc_key_der_256;
 
     (void)data;
@@ -1060,7 +1067,7 @@ int test_ecdsa_p384_pkey(ENGINE *e, void *data)
     EVP_PKEY *pkey = NULL;
     unsigned char ecdsaSig[120];
     size_t ecdsaSigLen;
-    unsigned char buf[20];
+    unsigned char buf[WE_TEST_ECDSA_DIGEST_SZ];
     const unsigned char *p = ecc_key_der_384;
 
     (void)data;
@@ -1118,7 +1125,7 @@ int test_ecdsa_p521_pkey(ENGINE *e, void *data)
     EVP_PKEY *pkey = NULL;
     unsigned char ecdsaSig[163];
     size_t ecdsaSigLen;
-    unsigned char buf[20];
+    unsigned char buf[WE_TEST_ECDSA_DIGEST_SZ];
     const unsigned char *p = ecc_key_der_521;
 
     (void)data;
@@ -1198,6 +1205,10 @@ int test_ecdsa_p192(ENGINE *e, void *data)
         PRINT_MSG("Verify with wolfengine");
         err = test_digest_verify(pkey, e, buf, sizeof(buf), EVP_sha224(),
                                 ecdsaSig, ecdsaSigLen, 0);
+#ifdef WE_TEST_FIPS_V7
+        /* v7 refuses P-192 verify as well as sign. */
+        err = err != 1;
+#endif
     }
     if (err == 0) {
         PRINT_MSG("Verify bad signature with wolfengine");
@@ -1879,7 +1890,7 @@ int test_ec_key_ecdsa(ENGINE *e, const unsigned char *privKey,
     unsigned char ecdsaSig[140];
     size_t ecdsaSigLen;
     ECDSA_SIG *eccSig;
-    unsigned char buf[20];
+    unsigned char buf[WE_TEST_ECDSA_DIGEST_SZ];
     const unsigned char *p;
 
     XMEMSET(buf, 0, sizeof(buf));

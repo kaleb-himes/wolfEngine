@@ -36,6 +36,12 @@
 #include <wolfssl/wolfcrypt/rsa.h>
 #include <wolfssl/wolfcrypt/aes.h>
 
+/* wolfCrypt FIPS v7 refuses RSA under 2048 bits, P-192, the TLS 1.0 PRF and
+ * signing a digest shorter than SHA-224's. */
+#if defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 7)
+#define WE_TEST_FIPS_V7
+#endif
+
 /* The DES3-CBC code won't compile unless wolfCrypt has support for it. */
 #if defined(NO_DES3) && defined(WE_HAVE_DES3CBC)
 #undef WE_HAVE_DES3CBC

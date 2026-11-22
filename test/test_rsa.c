@@ -677,6 +677,13 @@ int test_rsa_ctrl_str(ENGINE* e, void* data)
     return err;
 }
 
+/* Key for the RSA operations expected to work: v7 refuses 1024 bits. */
+#ifdef WE_TEST_FIPS_V7
+#define RSA_VALID_DER rsa_key_der_2048
+#else
+#define RSA_VALID_DER rsa_key_der_1024
+#endif
+
 int test_rsa_direct_key_gen(ENGINE *e, void *data)
 {
     int err = 0;
@@ -791,7 +798,7 @@ int test_rsa_direct_priv_dec(ENGINE *e, void *data)
                            PRIVATE_DECRYPT) != 1;
     if (err == 0) {
         PRINT_MSG("Check that private decrypt works with valid key size.");
-        err = test_rsa_direct(e, rsa_key_der_1024, sizeof(rsa_key_der_1024),
+        err = test_rsa_direct(e, RSA_VALID_DER, sizeof(RSA_VALID_DER),
                               PRIVATE_DECRYPT);
     }
 
@@ -809,7 +816,7 @@ int test_rsa_direct_pub_enc(ENGINE *e, void *data)
                            PUBLIC_ENCRYPT) != 1;
     if (err == 0) {
         PRINT_MSG("Check that public encrypt works with valid key size.");
-        err = test_rsa_direct(e, rsa_key_der_1024, sizeof(rsa_key_der_1024),
+        err = test_rsa_direct(e, RSA_VALID_DER, sizeof(RSA_VALID_DER),
                               PUBLIC_ENCRYPT);
     }
 
@@ -829,7 +836,7 @@ int test_rsa_direct_pub_dec(ENGINE *e, void *data)
                            PUBLIC_DECRYPT) != 1;
     if (err == 0) {
         PRINT_MSG("Check that public decrypt works with valid key size.");
-        err = test_rsa_direct(e, rsa_key_der_1024, sizeof(rsa_key_der_1024),
+        err = test_rsa_direct(e, RSA_VALID_DER, sizeof(RSA_VALID_DER),
                               PUBLIC_DECRYPT);
     }
 
@@ -1173,7 +1180,7 @@ int test_rsa_enc_dec_pkcs1(ENGINE *e, void *data)
                            RSA_PKCS1_PADDING, NULL, NULL) != 1;
     if (err == 0) {
         PRINT_MSG("Check that private decrypt works with valid key size.");
-        err = test_rsa_enc_dec(e, rsa_key_der_1024, sizeof(rsa_key_der_1024),
+        err = test_rsa_enc_dec(e, RSA_VALID_DER, sizeof(RSA_VALID_DER),
                                RSA_PKCS1_PADDING, NULL, NULL);
     }
 
@@ -1184,7 +1191,7 @@ int test_rsa_enc_dec_no_pad(ENGINE *e, void *data)
 {
     (void)data;
 
-    return test_rsa_enc_dec(e, rsa_key_der_1024, sizeof(rsa_key_der_1024),
+    return test_rsa_enc_dec(e, RSA_VALID_DER, sizeof(RSA_VALID_DER),
                             RSA_NO_PADDING, NULL, NULL);
 }
 
@@ -1243,17 +1250,17 @@ int test_rsa_enc_dec_oaep(ENGINE *e, void *data)
     (void)data;
 
     /* Use SHA-1 (default) for MD and MGF1 MD. */
-    err = test_rsa_enc_dec(e, rsa_key_der_1024, sizeof(rsa_key_der_1024),
+    err = test_rsa_enc_dec(e, RSA_VALID_DER, sizeof(RSA_VALID_DER),
                            RSA_PKCS1_OAEP_PADDING, NULL, NULL) == 1;
     if (err == 0) {
         /* Use SHA-256 for MD and MGF1 MD. */
-        err = test_rsa_enc_dec(e, rsa_key_der_1024, sizeof(rsa_key_der_1024),
+        err = test_rsa_enc_dec(e, RSA_VALID_DER, sizeof(RSA_VALID_DER),
                                RSA_PKCS1_OAEP_PADDING, EVP_sha256(),
                                EVP_sha256()) == 1;
     }
     if (err == 0) {
         /* Use SHA-384 for MD and SHA-512 for MGF1 MD. */
-        err = test_rsa_enc_dec(e, rsa_key_der_1024, sizeof(rsa_key_der_1024),
+        err = test_rsa_enc_dec(e, RSA_VALID_DER, sizeof(RSA_VALID_DER),
                                RSA_PKCS1_OAEP_PADDING, EVP_sha384(),
                                EVP_sha512()) == 1;
     }
@@ -1304,7 +1311,12 @@ int test_rsa_pkey_keygen(ENGINE *e, void *data)
         err = (eCmd = BN_new()) == NULL;
     }
     if (err == 0) {
+#ifdef WE_TEST_FIPS_V7
+        /* v7 needs an odd exponent of at least 65537; 65537 is the default. */
+        err = BN_set_word(eCmd, 65539) != 1;
+#else
         err = BN_set_word(eCmd, 3) != 1;
+#endif
     }
     if (err == 0) {
         PRINT_MSG("Change the public exponent w/ ctrl command");
@@ -1392,14 +1404,18 @@ int test_rsa_pkey_invalid_key_size(ENGINE *e, void *data) {
 
 #if defined(HAVE_FIPS) || defined(HAVE_FIPS_VERSION)
     if (err == 0) {
-        PRINT_MSG("Check that signing with OpenSSL and verifying with "
-            "wolfEngine using a 1024-bit key works.");
+        PRINT_MSG("Check wolfEngine verify of an OpenSSL signature with a "
+            "1024-bit key.");
         err = test_pkey_sign(pkey, NULL, buf, sizeof(buf), rsaSig, &rsaSigLen,
                              0, NULL, NULL);
     }
     if (err == 0) {
         err = test_pkey_verify(pkey, e, buf, sizeof(buf), rsaSig, rsaSigLen, 0,
                                NULL, NULL);
+#ifdef WE_TEST_FIPS_V7
+        /* v7 refuses verify with a 1024-bit key too. */
+        err = err != 1;
+#endif
     }
 #endif /* HAVE_FIPS || HAVE_FIPS_VERSION */
 
